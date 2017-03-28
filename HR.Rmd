@@ -1,0 +1,193 @@
+---
+title: "HR"
+author: "Suchitra"
+date: "3/21/2017"
+output: html_document
+---
+#Questions:
+#Why are our best and most experienced employees leaving prematurely? 
+#Which Valuable employee will leave next
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(dplyr)
+```
+
+
+
+```{r cars}
+#Code the missing values as NA
+hr_data <- read.csv("HR_comma_sep.csv", header = T, na.strings = c(""))
+sapply(hr_data, function(x) sum(is.na(x))) #No missing values present in the data
+
+#Lets explore this dataset
+names(hr_data)
+#Structure of the dataset
+str(hr_data)
+```
+Finding the structure of the dataset gives us an information about the following:
+Type of dataset: Data Frame
+Number of variables and records
+Data Type of the variables: Num, int, factor
+Target variable : left
+
+```{r}
+table(hr_data$left)
+
+#Satisfaction level of people who left
+ggplot(data=hr_data, aes(x=factor(hr_data$left),y=hr_data$satisfaction_level))+
+  geom_boxplot(aes(color=factor(hr_data$left)))+
+  xlab("Left")+
+  ylab("Satisfaction level")
+by(hr_data$satisfaction_level, hr_data$left, summary)
+
+#Evaluation
+ggplot(data=hr_data, aes(hr_data$last_evaluation))+
+  geom_density(aes(group= factor(hr_data$left),fill=factor(hr_data$left)))+
+  xlab("Left")+
+  ylab("Last Evaluation")
+by(hr_data$last_evaluation, hr_data$left, summary)
+
+
+#Average_monthly_hours
+ggplot(data=hr_data, aes(x=factor(hr_data$left),y=hr_data$average_montly_hours))+
+  geom_boxplot(aes(color=factor(hr_data$left)))+
+  xlab("Left")+
+  ylab("Average Monthly Hours")
+
+#Time spend in the company
+ggplot(data=hr_data, aes(x=factor(hr_data$left),y=hr_data$time_spend_company))+
+  geom_boxplot(aes(color=factor(hr_data$left)))+
+  xlab("Left")+
+  ylab("Time spend in the company")
+
+#Salary
+table(hr_data$salary)
+by(hr_data$salary, hr_data$left, table)
+
+#Number of projects
+by(hr_data$number_project,hr_data$left,table)
+
+#Promotion in last 5 years
+table(hr_data$promotion_last_5years)
+by(hr_data$promotion_last_5years,hr_data$left, table)
+
+#Sales
+x<- table(hr_data$sales, hr_data$left)
+by(hr_data$sales, hr_data$left, table)
+ggplot(aes(hr_data$sales), data=hr_data)+
+  geom_bar(aes(fill=factor(hr_data$left)))+
+  xlab("Sales")
+
+
+```
+1.Until now, 23.8% of the people have left.
+
+2.The satisfaction level of employees who left the company(median= 0.44) is much lower than that of the employees who stayed.
+
+3.Average monthly hours of people who left is higher than that of people who stayed.
+
+4.People who left the company have a much higher tenure as compared to the ones who stayed.
+
+5.6.6% of people from higher salary range left, 29.68% from low salary range left, 20.4% from medium salary range left. Thus, its clear that people from lower salary range tend to leave the company.
+
+6. Maximum number of people who did not leave, seem to work on 3 or 4 projects in the comapny.Maximum number of people who left seem to have worked in 2 projects or higher numbers like 6 or 7 in the comapny.
+
+5.Only 2.2% of the people in the company were promoted in the last 5 years. 
+2.7% of people who stayed got the promotion, whereas only 0.5% of people who left had got a promotion.
+
+6.We can see two peaks of evaluation score for people who left and this indicates that most people who left are extremely high or extremely low performers.
+
+Important observations/Insights:
+
+People who left the company seem to be less satisfied as compared to the ones staying back. 
+Higher working hours might be one of the reasons for the people to leave the company.
+People who left the company seem to have higher tenure. This may imply that they are looking for better opportunities or looking for a change in job. 
+People having low salaries seem to have left the company in large numbers, this may be due to their dissatisfaction due to lower salaries or higher opportunities in the market for lower levels.
+People who left seem to have extremely high or low performance evaluation.This may mean that they are not happy in the job and are leaving or they are overqualified and are looking for better opportunities. 
+Promotion might be an important factor in a person's decision to leave or stay back.
+
+
+
+#Let us find the bivariate relationship present in the data. First lets find the correlation between the output variable i.e left and all other variables.
+```{r}
+#Correlations are performed on numeric values and hence converting sales and salary to numeric value.
+hr_data$sales <- as.numeric(hr_data$sales)
+hr_data$salary <- as.numeric(hr_data$salary)
+cor(x=hr_data[,1:10], y= hr_data[,1:10])
+```
+We find the correlation between all the variables to examine the relationship between the variables themselves.
+Satisfaction level is the strongest correlated variable with left.
+Performance is correlated with average monthly hours and number of projects.
+Number of projects is correlated with average monthly hours.
+
+#Relationship between employees leaving and other factors
+```{r}
+#Obtaining the train and test dataset
+sample <- floor(0.7*nrow(hr_data))
+set.seed(100)
+hr_indices <- sample(seq_len(nrow(hr_data)), size=sample)
+
+#Load the train and test data
+hr_train <- hr_data[hr_indices,]
+hr_test <- hr_data[-hr_indices,]
+
+#Fitting a Binomial Logistic regression model for leaving the company
+model <- glm(hr_data$left ~., family = binomial(link="logit"), data=hr_data)
+summary(model)
+
+
+```
+The p value for all the variables are statistically significant.
+Satisfaction level, Number of projects, work accident, promotion and sales(considering all the coefficients for sales), these varaibles have a negative relationship a person leaving the company.
+
+#Prediction
+```{r}
+
+hr_predict <- predict(model,type = "response", hr_test)
+hr_predict <-ifelse(hr_predict > 0.5,1,0)
+
+Error <-mean(hr_predict != hr_test$left)
+print(paste('Accuracy', 1-Error))
+
+
+
+```
+After performing out of sample validation using the test data, we get the the accuracy of this model to be 0.77 which is high. Thus, we can say that this model is a good fit to our data.
+
+
+#Performance of the logistic regression model
+```{r}
+#install.packages("ROCR")
+library(ROCR)
+hr_predict1 <- predict(model,type = "response", hr_test)
+pr <- prediction(hr_predict1, hr_test$left)
+prf <- performance(pr, measure = "tpr", x.measure = "fpr")
+plot(prf)
+
+auc <- performance(pr, measure = "auc")
+auc <- auc@y.values[[1]]
+auc
+
+
+```
+We plot an ROC curve to get the Area under the curve(AUC), which is an indication of how well the model performs. Thue AUC comes out to be 0.8. Thus this tells us that there is scope of improvement to this model.
+
+We try to model this data ona random forest model, to compare it with the logistic regression model and see if this model has a better fit as compared to the previous.
+
+#Random forest
+```{r}
+
+library(randomForest)
+
+hr_rf <- randomForest(as.factor(hr_train$left)~.,hr_train, importance=TRUE, ntree=1000,method='class')
+
+pred <- predict(hr_rf,hr_test)
+table(pred, hr_test$left)
+
+accuracy<- (3421+1043)/nrow(hr_test)
+accuracy
+```
+
+As we can see the random forest mode gives an accuracy of 0.992, which is very high. This model fits our data much better than the logistic regression model.

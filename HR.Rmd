@@ -2,7 +2,9 @@
 title: "HR"
 author: "Suchitra"
 date: "3/21/2017"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 #Questions:
 #Why are our best and most experienced employees leaving prematurely? 
@@ -16,7 +18,7 @@ library(dplyr)
 
 
 
-```{r cars}
+```{r}
 #Code the missing values as NA
 hr_data <- read.csv("HR_comma_sep.csv", header = T, na.strings = c(""))
 sapply(hr_data, function(x) sum(is.na(x))) #No missing values present in the data
@@ -42,6 +44,13 @@ ggplot(data=hr_data, aes(x=factor(hr_data$left),y=hr_data$satisfaction_level))+
   ylab("Satisfaction level")
 by(hr_data$satisfaction_level, hr_data$left, summary)
 
+```
+Until now, 23.8% of the people have left the company.
+
+The satisfaction level of employees who left the company(median= 0.44) is much lower than that of the employees who stayed(0.69). This may indicate that the employees ae leaving the company due to dissatisfaction in their work.
+
+
+```{r}
 #Evaluation
 ggplot(data=hr_data, aes(hr_data$last_evaluation))+
   geom_density(aes(group= factor(hr_data$left),fill=factor(hr_data$left)))+
@@ -50,54 +59,86 @@ ggplot(data=hr_data, aes(hr_data$last_evaluation))+
 by(hr_data$last_evaluation, hr_data$left, summary)
 
 
+#Relationship between satisfaction levels and last_evaluation.
+ggplot(aes(hr_data$last_evaluation, hr_data$satisfaction_level), data=hr_data)+
+  geom_point(alpha=1/10, col="red")+
+  facet_wrap(~hr_data$left)
+```
+
+We can see two peaks of evaluation scores for people who left and this indicates that most people who left are extremely high or extremely low performers.
+
+The plot for satisfaction levels and last evaluation is tells us that these both factors might be related. For the  employees that left the company, satisfaction levels are lesser as compared to the ones staying back. 
+We can see two distinct pattern for the employees who left the company, one where the evaluation is very high (high performers), but the satisfaction level is very less. Other where the satisfaction and evaluation are on the lower side. 
+
+
+
+```{r}
 #Average_monthly_hours
 ggplot(data=hr_data, aes(x=factor(hr_data$left),y=hr_data$average_montly_hours))+
   geom_boxplot(aes(color=factor(hr_data$left)))+
   xlab("Left")+
   ylab("Average Monthly Hours")
 
+
+```
+
+Average monthly hours of people who left is higher than that of people who stayed.
+
+```{r}
 #Time spend in the company
 ggplot(data=hr_data, aes(x=factor(hr_data$left),y=hr_data$time_spend_company))+
   geom_boxplot(aes(color=factor(hr_data$left)))+
   xlab("Left")+
   ylab("Time spend in the company")
+```
 
+People who left the company have a much higher tenure as compared to the ones who stayed.
+
+
+```{r}
 #Salary
 table(hr_data$salary)
 by(hr_data$salary, hr_data$left, table)
+```
 
+6.6% of people from higher salary range left, 29.68% from low salary range left, 20.4% from medium salary range left. Thus, its clear that people from lower salary range tend to leave the company.
+
+
+```{r}
 #Number of projects
 by(hr_data$number_project,hr_data$left,table)
 
+```
+
+Maximum number of people who did not leave, seem to work on 3 or 4 projects in the comapny.Maximum number of people who left seem to have worked in 2 projects or higher numbers like 6 or 7 in the comapny.
+
+
+```{r}
 #Promotion in last 5 years
 table(hr_data$promotion_last_5years)
 by(hr_data$promotion_last_5years,hr_data$left, table)
 
+```
+
+Only 2.2% of the people in the company were promoted in the last 5 years. 
+2.7% of people who stayed got the promotion, whereas only 0.5% of people who left had got a promotion.
+
+```{r}
 #Sales
 x<- table(hr_data$sales, hr_data$left)
 by(hr_data$sales, hr_data$left, table)
 ggplot(aes(hr_data$sales), data=hr_data)+
   geom_bar(aes(fill=factor(hr_data$left)))+
   xlab("Sales")
+```
 
+
+```{r}
+#Satisfaction level vs salary
+ggplot(aes(hr_data$salary,hr_data$satisfaction_level), data=hr_data)+
+  geom_raster(aes(fill=hr_data$left))
 
 ```
-1.Until now, 23.8% of the people have left.
-
-2.The satisfaction level of employees who left the company(median= 0.44) is much lower than that of the employees who stayed.
-
-3.Average monthly hours of people who left is higher than that of people who stayed.
-
-4.People who left the company have a much higher tenure as compared to the ones who stayed.
-
-5.6.6% of people from higher salary range left, 29.68% from low salary range left, 20.4% from medium salary range left. Thus, its clear that people from lower salary range tend to leave the company.
-
-6. Maximum number of people who did not leave, seem to work on 3 or 4 projects in the comapny.Maximum number of people who left seem to have worked in 2 projects or higher numbers like 6 or 7 in the comapny.
-
-5.Only 2.2% of the people in the company were promoted in the last 5 years. 
-2.7% of people who stayed got the promotion, whereas only 0.5% of people who left had got a promotion.
-
-6.We can see two peaks of evaluation score for people who left and this indicates that most people who left are extremely high or extremely low performers.
 
 Important observations/Insights:
 
@@ -115,9 +156,10 @@ Promotion might be an important factor in a person's decision to leave or stay b
 #Correlations are performed on numeric values and hence converting sales and salary to numeric value.
 hr_data$sales <- as.numeric(hr_data$sales)
 hr_data$salary <- as.numeric(hr_data$salary)
-cor(x=hr_data[,1:10], y= hr_data[,1:10])
+x <- cor(x=hr_data[,1:10], y= hr_data[,1:10])
 ```
-We find the correlation between all the variables to examine the relationship between the variables themselves.
+We find the correlation between all the variables to examine the relationship between the variables themselves.Correlation shows how strongly two variables are related. A positive correlation shows that as 1 variable increases the other increases too, while a negative correlation shows that a one variable decreases the other decreases too.
+
 Satisfaction level is the strongest correlated variable with left.
 Performance is correlated with average monthly hours and number of projects.
 Number of projects is correlated with average monthly hours.
@@ -140,7 +182,7 @@ summary(model)
 
 ```
 The p value for all the variables are statistically significant.
-Satisfaction level, Number of projects, work accident, promotion and sales(considering all the coefficients for sales), these varaibles have a negative relationship a person leaving the company.
+Satisfaction level, Number of projects, work accident, promotion and sales(considering all the coefficients for sales), these varaibles have a negative relationship with a person leaving the company.
 
 #Prediction
 ```{r}
@@ -174,7 +216,7 @@ auc
 ```
 We plot an ROC curve to get the Area under the curve(AUC), which is an indication of how well the model performs. Thue AUC comes out to be 0.8. Thus this tells us that there is scope of improvement to this model.
 
-We try to model this data ona random forest model, to compare it with the logistic regression model and see if this model has a better fit as compared to the previous.
+We try to model this data on a random forest algorithm, to compare it with the logistic regression model and see if this model has a better fit as compared to the previous.
 
 #Random forest
 ```{r}
@@ -188,6 +230,44 @@ table(pred, hr_test$left)
 
 accuracy<- (3421+1043)/nrow(hr_test)
 accuracy
+
+
 ```
 
 As we can see the random forest mode gives an accuracy of 0.992, which is very high. This model fits our data much better than the logistic regression model.
+
+#Extensive Logitic Regression:
+```{r}
+# We start the model with a single explanatory variable
+var1 <- glm(hr_data$left~ hr_data$satisfaction_level, data=hr_data, family = binomial())
+summary(var1)
+
+# 2nd variable
+var2 <- glm(hr_data$left ~ hr_data$satisfaction_level+hr_data$last_evaluation, data=hr_data, family = binomial())
+summary(var2)
+
+var3 <- glm(hr_data$left ~ hr_data$satisfaction_level+hr_data$last_evaluation+ hr_data$number_project, data=hr_data, family = binomial())
+summary(var3)
+
+var4 <- glm(hr_data$left ~ hr_data$satisfaction_level+hr_data$last_evaluation+ hr_data$number_project+ hr_data$average_montly_hours, data=hr_data, family = binomial())
+summary(var4)
+
+var5 <- glm(hr_data$left ~ hr_data$satisfaction_level+hr_data$last_evaluation+ hr_data$number_project+ hr_data$average_montly_hours + hr_data$time_spend_company, data=hr_data, family = binomial())
+summary(var5)
+
+#
+var6 <- glm(hr_data$left ~ hr_data$satisfaction_level+hr_data$last_evaluation+ hr_data$number_project+ hr_data$average_montly_hours + hr_data$time_spend_company +hr_data$Work_accident, data=hr_data, family = binomial())
+summary(var6)
+
+var7 <- glm(hr_data$left ~ hr_data$satisfaction_level+hr_data$last_evaluation+ hr_data$number_project+ hr_data$average_montly_hours + hr_data$time_spend_company +hr_data$Work_accident+ hr_data$promotion_last_5years, data=hr_data, family = binomial())
+summary(var7)
+
+var8 <- glm(hr_data$left ~ hr_data$satisfaction_level+hr_data$last_evaluation+ hr_data$number_project+ hr_data$average_montly_hours + hr_data$time_spend_company +hr_data$Work_accident+ hr_data$promotion_last_5years + hr_data$sales, data=hr_data, family = binomial())
+summary(var8)
+
+var8 <- glm(hr_data$left ~ hr_data$satisfaction_level+hr_data$last_evaluation+ hr_data$number_project+ hr_data$average_montly_hours + hr_data$time_spend_company +hr_data$Work_accident+ hr_data$promotion_last_5years + hr_data$sales +hr_data$salary, data=hr_data, family = binomial())
+summary(var8)
+
+
+```
+

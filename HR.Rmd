@@ -47,7 +47,7 @@ by(hr_data$satisfaction_level, hr_data$left, summary)
 ```
 Until now, 23.8% of the people have left the company.
 
-The satisfaction level of employees who left the company(median= 0.44) is much lower than that of the employees who stayed(0.69). This may indicate that the employees ae leaving the company due to dissatisfaction in their work.
+The satisfaction level of employees who left the company(median= 0.44) is much lower than that of the employees who stayed(0.69). This may indicate that the employees are leaving the company due to dissatisfaction in their work.
 
 
 ```{r}
@@ -68,7 +68,7 @@ ggplot(aes(hr_data$last_evaluation, hr_data$satisfaction_level), data=hr_data)+
 We can see two peaks of evaluation scores for people who left and this indicates that most people who left are extremely high or extremely low performers.
 
 The plot for satisfaction levels and last evaluation is tells us that these both factors might be related. For the  employees that left the company, satisfaction levels are lesser as compared to the ones staying back. 
-We can see two distinct pattern for the employees who left the company, one where the evaluation is very high (high performers), but the satisfaction level is very less. Other where the satisfaction and evaluation are on the lower side. 
+We can see two distinct patterns for the employees who left the company, one where the evaluation is very high (high performers), but the satisfaction level is very less. Other where the satisfaction and evaluation are on the lower side. 
 
 
 
@@ -201,7 +201,7 @@ After performing out of sample validation using the test data, we get the the ac
 
 #Performance of the logistic regression model
 ```{r}
-#install.packages("ROCR")
+#install.packages("ROCR") Receiver operating characteristics.
 library(ROCR)
 hr_predict1 <- predict(model,type = "response", hr_test)
 pr <- prediction(hr_predict1, hr_test$left)
@@ -218,6 +218,35 @@ We plot an ROC curve to get the Area under the curve(AUC), which is an indicatio
 
 We try to model this data on a random forest algorithm, to compare it with the logistic regression model and see if this model has a better fit as compared to the previous.
 
+#Decision Trees
+```{r}
+library(rpart)
+tree_model <- rpart(hr_train$left~., hr_train, method = "class")
+summary(tree_model)
+plot(tree_model)
+text(tree_model)
+tree_predict <- predict(tree_model, hr_test, type="class")
+
+
+#Performance testing
+#install.packages("caret")
+#install.packages("e1071", dependencies = TRUE)
+library(caret)
+confusionMatrix(tree_predict, hr_test$left)
+
+```
+
+The above data was modeled using decision trees with the help of th rpart package.
+ The performance is tested using confusion matrix which gives a tabular summary of the actual test data labels vs the predicted labels. The confusion matrix gives an acciracy of 96.8%. Sensitivity which represents the true positive rate is 98.74%. i.e this is the percentage of times the model predicted that the an employee will leave the company and the employee actually left. Specificity which represents the true negative rate is 90.63% i.e this is the percentage of times the model predicted that an employee will not leave the company and the employee actually did not.
+
+
+
+
+
+
+
+
+
 #Random forest
 ```{r}
 
@@ -226,15 +255,12 @@ library(randomForest)
 hr_rf <- randomForest(as.factor(hr_train$left)~.,hr_train, importance=TRUE, ntree=1000,method='class')
 
 pred <- predict(hr_rf,hr_test)
-table(pred, hr_test$left)
 
-accuracy<- (3421+1043)/nrow(hr_test)
-accuracy
-
+confusionMatrix(pred, hr_test$left)
 
 ```
 
-As we can see the random forest mode gives an accuracy of 0.992, which is very high. This model fits our data much better than the logistic regression model.
+As we can see the random forest mode gives an accuracy of 99.07%, which is very higher than that given by the decision trees. This model fits our data much better than the logistic regression model and decision trees.
 
 #Extensive Logitic Regression:
 ```{r}
@@ -270,4 +296,8 @@ summary(var8)
 
 
 ```
+
+
+
+
 
